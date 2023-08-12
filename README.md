@@ -1,5 +1,5 @@
 # Flipper Price Tagger
-A flipper zero application that programs electronic shelf labels (ESL).
+A Flipper Zero app that programs electronic shelf labels (ESL).
 **This app is under construction and is not yet functional (watch this space)**
 
 
