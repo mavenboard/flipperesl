@@ -7,9 +7,8 @@
 
 
 typedef enum {
-    MainMenuItem_ProgramTag,
-    MainMenuItem_ManageTags,
-    MainMenuItem_About,
+    MainMenuItem_Tags,
+    MainMenuItem_Program,
     MainMenuItem_count
 } MainMenuItem;
 
@@ -18,8 +17,16 @@ static void on_selection(void* context, uint32_t index) {
     furi_assert(context);
     App* app = context;
 
-    UNUSED(app);
-    UNUSED(index);
+    switch (index) {
+    case MainMenuItem_Tags:
+        scene_manager_next_scene(app->scene_manager, AppScene_TagManager);
+        break;
+    case MainMenuItem_Program:
+        scene_manager_next_scene(app->scene_manager, AppScene_TagProgrammer);
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -27,15 +34,13 @@ void main_menu_on_enter(void* context) {
     furi_assert(context);
     App* app = context;
     submenu_reset(app->submenu);
-    submenu_set_header(app->submenu, "Price Tagger");
-    submenu_add_item(app->submenu, "Program Tag", MainMenuItem_ProgramTag, on_selection, app);
-    submenu_add_item(app->submenu, "Manage Tags", MainMenuItem_ManageTags, on_selection, app);
-    submenu_add_item(app->submenu, "About",       MainMenuItem_About,      on_selection, app);
+    submenu_add_item(app->submenu, "Tags",    MainMenuItem_Tags,    on_selection, app);
+    submenu_add_item(app->submenu, "Program", MainMenuItem_Program, on_selection, app);
     view_dispatcher_switch_to_view(app->view_dispatcher, AppView_Menu);
 }
 
 bool main_menu_on_event(void* context, SceneManagerEvent event) {
-
+    furi_assert(context);
     App* app = context;
 
     UNUSED(app);

@@ -1,5 +1,9 @@
 #include "price_tagger.h"
+#include "price_tagger_icons.h"
+#include "app_storage.h"
 #include "scenes/main_menu.h"
+#include "scenes/tag_manager.h"
+#include "scenes/tag_programmer.h"
 
 #include <furi.h>
 
@@ -10,15 +14,21 @@ static const uint32_t TICK_PERIOD_MS = 100;
 
 
 static void (*const on_enter_handlers[])(void*) = {
-    main_menu_on_enter
+    main_menu_on_enter,
+    tag_manager_on_enter,
+    tag_programmer_on_enter
 };
 
 static bool (*const on_event_handlers[])(void*, SceneManagerEvent) = {
-    main_menu_on_event
+    main_menu_on_event,
+    tag_manager_on_event,
+    tag_programmer_on_event
 };
 
 static void (*const on_exit_handlers[])(void*) = {
-    main_menu_on_exit
+    main_menu_on_exit,
+    tag_manager_on_exit,
+    tag_programmer_on_exit
 };
 
 static const SceneManagerHandlers scene_handlers = {
@@ -50,6 +60,8 @@ static bool on_custom_event(void* context, uint32_t event) {
 static App* app_alloc() {
     App* app = malloc(sizeof(App));
     app->gui = furi_record_open(RECORD_GUI);
+    app->storage = furi_record_open(RECORD_STORAGE);
+    app->dialogs = furi_record_open(RECORD_DIALOGS);
 
     app->view_dispatcher = view_dispatcher_alloc();
     view_dispatcher_enable_queue(app->view_dispatcher);
@@ -62,11 +74,15 @@ static App* app_alloc() {
     app->submenu = submenu_alloc();
     view_dispatcher_add_view(app->view_dispatcher, AppView_Menu, submenu_get_view(app->submenu));
 
-    app->popup = popup_alloc();
-    view_dispatcher_add_view(app->view_dispatcher, AppView_Popup, popup_get_view(app->popup));
+    //app->popup = popup_alloc();
+    //view_dispatcher_add_view(app->view_dispatcher, AppView_Popup, popup_get_view(app->popup));
 
     app->scene_manager = scene_manager_alloc(&scene_handlers, app);
     scene_manager_next_scene(app->scene_manager, AppScene_MainMenu);
+
+    //app->file_path = furi_string_alloc();
+
+    //app->active_tag = NULL;
 
     return app;
 }
@@ -77,18 +93,32 @@ static void app_free(App* app) {
     view_dispatcher_remove_view(app->view_dispatcher, AppView_Menu);
     submenu_free(app->submenu);
 
-    view_dispatcher_remove_view(app->view_dispatcher, AppView_Popup);
-    popup_free(app->popup);
+    //view_dispatcher_remove_view(app->view_dispatcher, AppView_Popup);
+    //popup_free(app->popup);
 
     view_dispatcher_free(app->view_dispatcher);
 
+    //furi_string_free(app->file_path);
+
+    // if (app->active_tag) {
+    //     tag_free(app->active_tag);
+    // }
+
+    furi_record_close(RECORD_DIALOGS);
+    furi_record_close(RECORD_STORAGE);
     furi_record_close(RECORD_GUI);
     free(app);
 }
 
 int32_t app_main(void* p) {
     UNUSED(p);
+
     App* app = app_alloc();
+
+    if (!app_storage_create_dirs(app->storage)) {
+        dialog_message_show_storage_error(app->dialogs, "Failed to create\napp folders");
+    }
+
     view_dispatcher_run(app->view_dispatcher);
     app_free(app);
     return 0;
